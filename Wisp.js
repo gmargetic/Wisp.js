@@ -37,6 +37,7 @@ class Wisp {
      * @param {Object} [userConfig={}] - User configuration overrides
      */
     static init(userConfig = {}) {
+        Wisp.initErrorHandling();
         this.config = { ...this.config, ...userConfig };
         this.bind();
         this.setupObserver();
@@ -57,7 +58,7 @@ class Wisp {
      */
     static async call(component, method, payload = {}, triggerElement = null) {
         if (!component || !method) {
-            this.showError('Component and method parameters are required');
+            this.throwWispError('Component and method parameters are required', true);
         }
 
         const requestKey = `${component}:${method}:${JSON.stringify(payload)}`;
@@ -133,22 +134,22 @@ class Wisp {
             });
 
             if (!response.ok) {
-                this.showError(`HTTP error! status: ${response.status}`);
+                this.throwWispError(`HTTP error! status: ${response.status}`, true);
             }
 
             const contentType = response.headers.get('content-type');
             if (!contentType || (!contentType.includes('application/json') && !contentType.includes('json'))) {
-                this.showError('Server response was not JSON');
+                this.throwWispError('Server response was not JSON', true);
             }
 
             const responseData = await response.json();
 
             if (responseData.error) {
-                this.showError(responseData.message || 'Unknown error occurred');
+                this.throwWispError(responseData.message || 'Unknown error occurred', true);
             }
 
             if (!responseData.view || typeof responseData.checksum === 'undefined') {
-                this.showError('Invalid response format from server');
+                this.throwWispError('Invalid response format from server', true);
             }
 
             if (componentEl && responseData.view) {
@@ -173,9 +174,9 @@ class Wisp {
             return responseData;
         } catch (error) {
             if (error instanceof TypeError && error.message.includes('fetch')) {
-                this.showError('Network error occurred. Please check your connection.');
+                this.throwWispError('Network error occurred. Please check your connection.');
             } else {
-                this.showError(error.message);
+                this.throwWispError(error.message);
             }
 
             console.error('Wisp error:', error);
@@ -303,6 +304,76 @@ class Wisp {
             errorDiv.style.transition = 'opacity 0.3s ease';
             setTimeout(() => errorDiv.remove(), 300);
         }, this.config.errorDisplayTime);
+    }
+
+    /**
+     * Initializes global error handling for Wisp errors
+     * @static
+     * @description
+     * Sets up a global error handler that catches WispError instances.
+     * Non-fatal Wisp errors will be displayed but won't stop execution.
+     * Other errors will be passed to the original error handler if it exists.
+     */
+    static initErrorHandling() {
+        const originalErrorHandler = window.onerror;
+
+        window.onerror = (message, source, lineno, colno, error) => {
+            if (error instanceof WispError) {
+                this.showError(error.message);
+                if (error.nonFatal) {
+                    return true; // Prevent default error logging for non-fatal errors
+                }
+                return true; // Also prevent for fatal Wisp errors (though they'll stop execution)
+            }
+
+            if (originalErrorHandler) {
+                return originalErrorHandler(message, source, lineno, colno, error);
+            }
+            return false; // Let default error handling occur
+        };
+    }
+
+    /**
+     * Throws a Wisp error with optional execution control
+     * @static
+     * @param {string} message - Error message to display
+     * @param {boolean} [fatal=false] - Whether the error should stop execution
+     * @throws {WispError} When fatal is true
+     * @description
+     * For fatal errors: throws immediately, stopping execution.
+     * For non-fatal errors: shows the error but continues execution by throwing
+     * in the next event loop tick.
+     */
+    static throwWispError(message, fatal = false) {
+        const error = new WispError(message);
+        error.nonFatal = !fatal;
+
+        if (fatal) {
+            throw error;
+        } else {
+            setTimeout(() => { throw error; }, 0);
+            this.showError(message);
+        }
+    }
+
+
+    /**
+     * Asynchronously throws a Wisp error
+     * @static
+     * @async
+     * @param {string} message - Error message to display
+     * @param {boolean} [fatal=false] - Whether the error should stop execution
+     * @throws {WispError} When fatal is true
+     * @description
+     * Shows the error immediately. Only throws if fatal is true.
+     * Designed for use in async functions where you want to display
+     * the error but might not want to stop execution.
+     */
+    static async throwWispErrorAsync(message, fatal = false) {
+        this.showError(message);
+        if (fatal) {
+            throw new WispError(message);
+        }
     }
 
     /**
@@ -674,7 +745,9 @@ class Wisp {
                 }
             });
 
-            if (!response.ok) this.showError(`Navigation failed: ${response.status}`);
+            if (!response.ok) {
+                this.showError(`Navigation failed: ${response.status}`);
+            }
 
             const html = await response.text();
             const parser = new DOMParser();
@@ -936,12 +1009,27 @@ class Wisp {
     }
 }
 
+/**
+ * Custom error class for Wisp-related errors
+ */
+class WispError extends Error {
+    /**
+     * Create a WispError instance
+     * @param {string} message - Error message
+     */
+    constructor(message) {
+        super(message);
+        this.name = "WispError";
+    }
+}
+
 // Initialize Wisp when DOM is ready
 document.addEventListener('DOMContentLoaded', () =>
     Wisp.init({
         defaultDebounce: 250,
         errorDisplayTime: 8000,
         enablePerformanceLogging: true,
+        stopExecutionOnError: true,
         navigationProgressBar: true,
         navigationProgressBarColor: '#29d',
         navigationProgressBarHeight: '3px'
