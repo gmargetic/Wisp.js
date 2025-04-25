@@ -1029,7 +1029,6 @@ document.addEventListener('DOMContentLoaded', () =>
         defaultDebounce: 250,
         errorDisplayTime: 8000,
         enablePerformanceLogging: true,
-        stopExecutionOnError: true,
         navigationProgressBar: true,
         navigationProgressBarColor: '#29d',
         navigationProgressBarHeight: '3px'
