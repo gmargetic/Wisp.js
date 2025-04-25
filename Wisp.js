@@ -57,7 +57,7 @@ class Wisp {
      */
     static async call(component, method, payload = {}, triggerElement = null) {
         if (!component || !method) {
-            throw new Error('Component and method parameters are required');
+            this.showError('Component and method parameters are required');
         }
 
         const requestKey = `${component}:${method}:${JSON.stringify(payload)}`;
@@ -133,22 +133,22 @@ class Wisp {
             });
 
             if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
+                this.showError(`HTTP error! status: ${response.status}`);
             }
 
             const contentType = response.headers.get('content-type');
             if (!contentType || (!contentType.includes('application/json') && !contentType.includes('json'))) {
-                throw new Error('Server response was not JSON');
+                this.showError('Server response was not JSON');
             }
 
             const responseData = await response.json();
 
             if (responseData.error) {
-                throw new Error(responseData.message || 'Unknown error occurred');
+                this.showError(responseData.message || 'Unknown error occurred');
             }
 
             if (!responseData.view || typeof responseData.checksum === 'undefined') {
-                throw new Error('Invalid response format from server');
+                this.showError('Invalid response format from server');
             }
 
             if (componentEl && responseData.view) {
@@ -674,7 +674,7 @@ class Wisp {
                 }
             });
 
-            if (!response.ok) throw new Error(`Navigation failed: ${response.status}`);
+            if (!response.ok) this.showError(`Navigation failed: ${response.status}`);
 
             const html = await response.text();
             const parser = new DOMParser();
