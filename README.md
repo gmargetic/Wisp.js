@@ -170,6 +170,137 @@ Add these attributes to any element inside a component to control its appearance
 
 ---
 
+## Request Headers
+
+```http
+POST /current-url-path HTTP/1.1
+Content-Type: application/json
+Accept: application/json
+X-Requested-With: X-Wisp
+```
+
+## Request Headers for Navigation
+
+```http
+GET /target-url HTTP/1.1
+Accept: text/html
+X-Requested-With: X-Wisp-Navigate
+```
+
+---
+
+
+## JSON Body Structure
+
+### Regular Method Call
+
+```json
+{
+    "component": "component-name",
+    "method": "method-name",
+    "_token": "CSRF-token-value",
+    "payload": {
+        "componentId": "component-id",
+        "checksum": "...",
+        "...": "additionalPayloadData"
+    }
+}
+```
+
+### Model Update Call (__updateModel)
+
+```json
+{
+    "component": "component-name",
+    "method": "__updateModel",
+    "_token": "CSRF-token-value",
+    "payload": {
+        "componentId": "component-id",
+        "checksum": "...",
+        "data": {
+            "fieldName": "fieldValue",
+            "...": "otherFields"
+        }
+    }
+}
+```
+
+---
+
+## Field Descriptions
+
+```markdown
+| Field        | Type    | Description                              |
+|--------------|---------|------------------------------------------|
+| component    | string  | Name of the component making the call    |
+| method       | string  | Method being called on the component     |
+| _token       | string  | CSRF token from <meta name="csrf-token"> |
+| payload      | object  | Contains the request data                |
+| componentId  | string  | Unique ID of the component instance      |
+| checksum     | string  | Checksum for the component state         |
+| data         | object  | (For model updates) Key-value fields     |
+```
+
+---
+
+## Example Requests
+
+### Regular Method Call
+
+```json
+{
+    "component": "user-profile",
+    "method": "updateAvatar",
+    "_token": "...",
+    "payload": {
+        "componentId": "profile-1",
+        "checksum": "...",
+        "avatarUrl": "https://example.com/avatar.jpg"
+    }
+}
+```
+
+---
+
+### Model Update
+
+```json
+{
+    "component": "search-form",
+    "method": "__updateModel",
+    "_token": "...",
+    "payload": {
+        "componentId": "search-1",
+        "checksum": "...",
+        "data": {
+            "query": "wisp framework",
+            "filter": "recent"
+        }
+    }
+}
+```
+
+---
+
+### Form Submission
+
+```json
+{
+    "component": "contact-form",
+    "method": "submit",
+    "_token": "...",
+    "payload": {
+        "componentId": "contact-1",
+        "checksum": "...",
+        "name": "John Doe",
+        "email": "john@example.com",
+        "message": "Hello Wisp!"
+    }
+}
+```
+
+---
+
 ## Server Response Format
 
 Wisp expects the following JSON structure from the server:
