@@ -229,17 +229,16 @@ X-Requested-With: X-Wisp-Navigate
 
 ## Field Descriptions
 
-```markdown
-| Field        | Type    | Description                              |
-|--------------|---------|------------------------------------------|
-| component    | string  | Name of the component making the call    |
-| method       | string  | Method being called on the component     |
-| _token       | string  | CSRF token from <meta name="csrf-token"> |
-| payload      | object  | Contains the request data                |
-| componentId  | string  | Unique ID of the component instance      |
-| checksum     | string  | Checksum for the component state         |
-| data         | object  | (For model updates) Key-value fields     |
-```
+| Field          | Type      | Description                               |
+| -------------- | --------- | ----------------------------------------- |
+| component      | string    | Name of the component making the call     |
+| method         | string    | Method being called on the component      |
+| _token         | string    | CSRF token from <meta name="csrf-token">  |
+| payload        | object    | Contains the request data                 |
+| componentId    | string    | Unique ID of the component instance       |
+| checksum       | string    | Checksum for the component state          |
+| data           | object    | (For model updates) Key-value fields      |
+
 
 ---
 
