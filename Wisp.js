@@ -746,7 +746,7 @@ class Wisp {
             });
 
             if (!response.ok) {
-                this.showError(`Navigation failed: ${response.status}`);
+                this.throwWispError(`Navigation failed: ${response.status}`, true);
             }
 
             const html = await response.text();
@@ -777,7 +777,7 @@ class Wisp {
                 window.history.pushState({}, '', url);
             }
         } catch (err) {
-            this.showError(err.message);
+            this.throwWispError(err.message);
             window.location.href = url; // fallback
         }
         finally {
